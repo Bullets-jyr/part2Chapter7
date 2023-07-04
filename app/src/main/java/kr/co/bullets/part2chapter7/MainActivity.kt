@@ -13,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.LocationServices
 import kr.co.bullets.part2chapter7.databinding.ActivityMainBinding
+import kr.co.bullets.part2chapter7.databinding.ItemForecastBinding
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
                 // Only approximate location access granted.
                 updateLocation()
             }
+
             else -> {
                 // No location access granted.
                 Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
@@ -77,7 +79,11 @@ class MainActivity : AppCompatActivity() {
     private fun updateLocation() {
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             locationPermissionRequest.launch(
                 arrayOf(
                     android.Manifest.permission.ACCESS_COARSE_LOCATION
@@ -87,7 +93,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         fusedLocationClient.lastLocation.addOnSuccessListener {
-            Log.e("MainActivity", it.toString())
+//            Log.e("MainActivity", it.toString())
 
             val retrofit = Retrofit.Builder()
                 .baseUrl("http://apis.data.go.kr/")
@@ -108,7 +114,10 @@ class MainActivity : AppCompatActivity() {
                 nx = point.nx,
                 ny = point.ny,
             ).enqueue(object : Callback<WeatherEntity> {
-                override fun onResponse(call: Call<WeatherEntity>, response: Response<WeatherEntity>) {
+                override fun onResponse(
+                    call: Call<WeatherEntity>,
+                    response: Response<WeatherEntity>
+                ) {
                     val forecastDateTimeMap = mutableMapOf<String, Forecast>()
 
                     val forecastList =
@@ -135,7 +144,39 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
-                Log.e("MainActivity", forecastDateTimeMap.toString())
+                    val list = forecastDateTimeMap.values.toMutableList()
+
+                    list.sortWith { forecast1, forecast2 ->
+                        val forecast1DateTime = "${forecast1.forecastDate}${forecast1.forecastTime}"
+                        val forecast2DateTime = "${forecast2.forecastDate}${forecast2.forecastTime}"
+
+                        return@sortWith forecast1DateTime.compareTo(forecast2DateTime)
+                    }
+
+                    Log.e("MainActivity", list.toString())
+
+                    val currentForecast = list.first()
+
+                    binding.temperatureTextView.text =
+                        getString(R.string.temparature_text, currentForecast.temperature)
+                    binding.skyTextView.text = currentForecast.weather
+                    binding.precipitationTextView.text =
+                        getString(R.string.precipitation_text, currentForecast.precipitation)
+
+                    binding.childForecastLayout.apply {
+                        list.forEachIndexed { index, forecast ->
+                            if (index == 0) {
+                                return@forEachIndexed
+                            }
+                            val itemView = ItemForecastBinding.inflate(layoutInflater)
+                            itemView.timeTextView.text = forecast.forecastTime
+                            itemView.weatherTextView.text = forecast.weather
+                            itemView.temperatureTextView.text = getString(R.string.temparature_text, forecast.temperature)
+                            addView(itemView.root)
+                        }
+                    }
+
+//                    Log.e("MainActivity", forecastDateTimeMap.toString())
                 }
 
                 override fun onFailure(call: Call<WeatherEntity>, t: Throwable) {

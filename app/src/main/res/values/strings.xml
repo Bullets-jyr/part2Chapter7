@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">part2Chapter7</string>
+    <string name="app_name">날씨 앱</string>
+    <string name="temparature_text">%.1f°C</string>
+    <string name="precipitation_text">강수확률 : %d%%</string>
 </resources>
