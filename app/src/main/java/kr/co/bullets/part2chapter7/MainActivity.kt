@@ -3,6 +3,7 @@ package kr.co.bullets.part2chapter7
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -19,6 +20,8 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.lang.Exception
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -94,6 +97,21 @@ class MainActivity : AppCompatActivity() {
 
         fusedLocationClient.lastLocation.addOnSuccessListener {
 //            Log.e("MainActivity", it.toString())
+
+            Thread {
+                try {
+                    val addressList = Geocoder(this, Locale.KOREA).getFromLocation(
+                        it.latitude,
+                        it.longitude,
+                        1
+                    )
+                    runOnUiThread {
+                        binding.locationTextView.text = addressList?.get(0)?.thoroughfare.orEmpty()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }.start()
 
             val retrofit = Retrofit.Builder()
                 .baseUrl("http://apis.data.go.kr/")
@@ -171,7 +189,8 @@ class MainActivity : AppCompatActivity() {
                             val itemView = ItemForecastBinding.inflate(layoutInflater)
                             itemView.timeTextView.text = forecast.forecastTime
                             itemView.weatherTextView.text = forecast.weather
-                            itemView.temperatureTextView.text = getString(R.string.temparature_text, forecast.temperature)
+                            itemView.temperatureTextView.text =
+                                getString(R.string.temparature_text, forecast.temperature)
                             addView(itemView.root)
                         }
                     }
