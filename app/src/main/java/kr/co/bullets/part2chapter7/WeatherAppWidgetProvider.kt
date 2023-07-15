@@ -30,7 +30,8 @@ class WeatherAppWidgetProvider : AppWidgetProvider() {
                 context.packageName,
                 R.layout.widget_weather
             ).apply {
-                setOnClickPendingIntent(R.id.test_text_view, pendingIntent)
+//                setOnClickPendingIntent(R.id.test_text_view, pendingIntent)
+                setOnClickPendingIntent(R.id.temperature_text_view, pendingIntent)
             }
 
             // Tell the AppWidgetManager to perform an update on the current app widget
